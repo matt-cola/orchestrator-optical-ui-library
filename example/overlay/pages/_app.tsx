@@ -1,0 +1,121 @@
+import React, { useEffect, useState } from 'react';
+
+import _ from 'lodash';
+import { SessionProvider } from 'next-auth/react';
+import { NextAdapter } from 'next-query-params';
+import App, { AppContext, AppProps } from 'next/app';
+import Head from 'next/head';
+import { useRouter } from 'next/router';
+import { getOpticalMapMenuItem } from 'orchestrator-optical-ui-library';
+import { QueryParamProvider } from 'use-query-params';
+
+import { EuiProvider, EuiSideNavItemType, EuiThemeColorMode } from '@elastic/eui';
+import {
+  ColorModes,
+  ConfirmationDialogContextWrapper,
+  OrchestratorConfig,
+  OrchestratorConfigProvider,
+  StoreProvider,
+  WfoAuth,
+  WfoErrorBoundary,
+  WfoErrorMonitoring,
+  WfoErrorMonitoringProvider,
+  WfoLogoSpinner,
+  WfoPageTemplate,
+  WfoToastsList,
+  emptyOrchestratorConfig,
+  wfoThemeModifications,
+} from '@orchestrator-ui/orchestrator-ui-components';
+
+import { getAppLogo } from '@/components/AppLogo/AppLogo';
+import { getInitialOrchestratorConfig } from '@/configuration';
+import { TranslationsProvider } from '@/translations/translationsProvider';
+
+import '../font/inter.css';
+
+type AppOwnProps = { orchestratorConfig: OrchestratorConfig };
+
+function CustomApp({ Component, pageProps }: AppProps & AppOwnProps) {
+  const { orchestratorConfig } = pageProps;
+  const router = useRouter();
+
+  // The optical map page lives in pages/optical-map.tsx
+  const addMenuItems = (
+    defaultMenuItems: EuiSideNavItemType<object>[],
+  ): EuiSideNavItemType<object>[] => [...defaultMenuItems, getOpticalMapMenuItem(router.pathname)];
+  const [orchestratorLoadedConfig, setOrchestratorLoadedConfig] =
+    useState<OrchestratorConfig | null>(null);
+  const [colorMode, setColorMode] = useState<EuiThemeColorMode>(ColorModes.LIGHT);
+
+  useEffect(() => {
+    if (orchestratorConfig && !_.isEqual(orchestratorConfig, emptyOrchestratorConfig)) {
+      setOrchestratorLoadedConfig(orchestratorConfig);
+    }
+  }, [orchestratorConfig]);
+
+  const errorMonitoringHandler: WfoErrorMonitoring | undefined = {
+    reportError: (error) => console.error(error),
+    reportMessage: () => {},
+  };
+
+  if (!orchestratorLoadedConfig) return <WfoLogoSpinner />;
+
+  return (
+    <WfoErrorBoundary>
+      <OrchestratorConfigProvider initialOrchestratorConfig={orchestratorLoadedConfig}>
+        <StoreProvider initialOrchestratorConfig={orchestratorLoadedConfig}>
+          <SessionProvider session={pageProps.session}>
+            <WfoErrorMonitoringProvider errorMonitoringHandler={errorMonitoringHandler}>
+              <WfoAuth>
+                <EuiProvider colorMode={colorMode} modify={wfoThemeModifications}>
+                  <TranslationsProvider>
+                    <Head>
+                      <link rel="icon" href="/favicon.png" />
+                      <title>Optical Orchestrator</title>
+                    </Head>
+                    <main className="app">
+                      <ConfirmationDialogContextWrapper>
+                        <WfoPageTemplate
+                          getAppLogo={getAppLogo}
+                          colorMode={colorMode}
+                          setColorMode={setColorMode}
+                          overrideMenuItems={addMenuItems}
+                        >
+                          <QueryParamProvider
+                            adapter={NextAdapter}
+                            options={{
+                              removeDefaultsFromUrl: false,
+                              enableBatching: true,
+                            }}
+                          >
+                            <Component {...pageProps} />
+                          </QueryParamProvider>
+                        </WfoPageTemplate>
+                        <WfoToastsList />
+                      </ConfirmationDialogContextWrapper>
+                    </main>
+                  </TranslationsProvider>
+                </EuiProvider>
+              </WfoAuth>
+            </WfoErrorMonitoringProvider>
+          </SessionProvider>
+        </StoreProvider>
+      </OrchestratorConfigProvider>
+    </WfoErrorBoundary>
+  );
+}
+
+CustomApp.getInitialProps = async (context: AppContext) => {
+  const isServerside = typeof window === 'undefined';
+  const appProps = await App.getInitialProps(context);
+
+  return {
+    ...appProps,
+    pageProps: {
+      ...appProps.pageProps,
+      orchestratorConfig: isServerside ? getInitialOrchestratorConfig() : null,
+    },
+  };
+};
+
+export default CustomApp;
