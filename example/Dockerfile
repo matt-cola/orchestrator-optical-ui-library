@@ -23,6 +23,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 # https://github.com/workfloworchestrator/example-orchestrator-ui
 ARG EXAMPLE_ORCHESTRATOR_UI_REF=32040b7bef15e9c22f9dced0a49717d9cb5118d6
+# The example app's lockfile pins an older release; this one replaces it.
+# https://github.com/workfloworchestrator/orchestrator-ui-library/releases
+ARG ORCHESTRATOR_UI_COMPONENTS_VERSION=12.0.0
 
 RUN apk add --no-cache git && corepack enable
 
@@ -34,6 +37,7 @@ RUN git init -q . \
 
 COPY --from=library /tmp/orchestrator-optical-ui-library.tgz /tmp/orchestrator-optical-ui-library.tgz
 RUN pnpm install --frozen-lockfile \
+    && pnpm add "@orchestrator-ui/orchestrator-ui-components@${ORCHESTRATOR_UI_COMPONENTS_VERSION}" \
     && pnpm add /tmp/orchestrator-optical-ui-library.tgz
 
 COPY example/overlay/ ./

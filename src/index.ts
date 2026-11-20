@@ -6,3 +6,5 @@ export * from './components/WfoOpticalMapPage';
 export * from './components/opticalMapMenuItem';
 export { nodeSymbolSvg, lineSymbolSvg, pipeLineStyle } from './components/opticalMapSymbols';
 export type { LineStyle, LinePalette, SymbolColors } from './components/opticalMapSymbols';
+export * from './components/WfoMonacoText';
+export * from './components/monacoTextAreaMatcher';

@@ -5,7 +5,7 @@ UI components for the [Workflow Orchestrator](https://workfloworchestrator.org) 
 UI built with
 [`@orchestrator-ui/orchestrator-ui-components`](https://github.com/workfloworchestrator/orchestrator-ui-library).
 
-It currently ships one page, the **optical map**:
+It ships the **optical map** page and a Monaco editor for long text form fields:
 
 - the **optical nodes** on a map, with one shape per `OpticalNodeRole` (ROADM, FOADM, Amplifier, Transponder,
   Transponder and ROADM, Transponder and FOADM, IPoDWDM);
@@ -102,6 +102,29 @@ text. The text is looked up in the `main` translations of your UI and used as is
 
 Lower-level exports, for building your own page: `WfoOpticalMap` (the map for a given topology),
 `useGetOpticalTopologyQuery` and `buildOpticalTopology`.
+
+## Long text fields in the Monaco editor
+
+`LongText` form fields (`format: long`) are a plain textarea in the orchestrator UI. With
+`monacoTextAreaMatcherExtender` they are shown in the Monaco editor of the step results: line numbers, search
+(Ctrl+F), next occurrence (Ctrl+D), multiple cursors.
+
+- an editable field is a `WfoMonacoTextEditor`: an input with a border, growing with its content;
+- a read-only field (`read_only_field(..., merge_type=LongText)`) is a `WfoMonacoTextViewer`, like a step result.
+
+```tsx
+// pages/_app.tsx
+import { monacoTextAreaMatcherExtender } from 'orchestrator-optical-ui-library';
+
+<StoreProvider
+    initialOrchestratorConfig={orchestratorConfig}
+    componentMatcherExtender={monacoTextAreaMatcherExtender}
+>
+```
+
+Nothing changes in the backend. To combine it with your own extender, call it from there:
+`(matchers) => myExtender(monacoTextAreaMatcherExtender(matchers))`. Both components are exported to use outside
+forms too. In the editor, Tab inserts a tab; press Ctrl+M first to move the focus with Tab instead.
 
 ## Try it in example-orchestrator-optical
 

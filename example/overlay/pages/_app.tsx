@@ -6,7 +6,10 @@ import { NextAdapter } from 'next-query-params';
 import App, { AppContext, AppProps } from 'next/app';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { getOpticalMapMenuItem } from 'orchestrator-optical-ui-library';
+import {
+  getOpticalMapMenuItem,
+  monacoTextAreaMatcherExtender,
+} from 'orchestrator-optical-ui-library';
 import { QueryParamProvider } from 'use-query-params';
 
 import { EuiProvider, EuiSideNavItemType, EuiThemeColorMode } from '@elastic/eui';
@@ -63,7 +66,10 @@ function CustomApp({ Component, pageProps }: AppProps & AppOwnProps) {
   return (
     <WfoErrorBoundary>
       <OrchestratorConfigProvider initialOrchestratorConfig={orchestratorLoadedConfig}>
-        <StoreProvider initialOrchestratorConfig={orchestratorLoadedConfig}>
+        <StoreProvider
+          initialOrchestratorConfig={orchestratorLoadedConfig}
+          componentMatcherExtender={monacoTextAreaMatcherExtender}
+        >
           <SessionProvider session={pageProps.session}>
             <WfoErrorMonitoringProvider errorMonitoringHandler={errorMonitoringHandler}>
               <WfoAuth>
